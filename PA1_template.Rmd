@@ -52,7 +52,7 @@ plot(dt[,"date"], dt[,"steps"], col = 'green', xlab='Date', ylab='Steps', main='
 lines(dt[,"date"], dt[,"steps"], col = 'red');
 ```
 
-# Make a time series plot (type = "1") of the 5-minute interval  and the average number of steps taken across all days
+# Make a time series plot (type = "l") of the 5-minute interval  and the average number of steps taken across all days
 ```{r}
 stepsByInterval <- setNames(aggregate(cd$steps, list(cd$interval), mean), c("interval", "steps"));
 library(ggplot2);
