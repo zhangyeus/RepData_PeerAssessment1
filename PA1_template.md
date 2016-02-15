@@ -1,4 +1,4 @@
-# Reproducible Research: Peer Assessment 1
+# Reproducible Research: A Quick Example Using knitr
 
 ## Loading and preprocessing the data
 
@@ -8,6 +8,7 @@ First, we use read.csv to read the csv file. Note that we specify na.string as "
 ```r
 d <- read.csv("activity.csv", sep=",", na.strings = "NA");
 d$date <- as.Date(d$date);
+cd <- d[complete.cases(d),];
 ```
 
 ## What is mean total number of steps taken per day?
@@ -15,20 +16,41 @@ d$date <- as.Date(d$date);
 First, we aggregate the total number of steps by date. We sum all steps at every interval. Then we take an average of toal number of steps by date. Note that we removed all NA values when calculating the mean total number of steps per day.
 
 
+# Calculate the total number of steps taken per day
+
+
 ```r
-dt <- setNames(aggregate(d[, 1], list(d$date), sum), c("date", "steps"));
-mean(dt[,2], na.rm=TRUE)
+dt <- setNames(aggregate(cd[, 1], list(cd$date), sum), c("date", "steps"));
+```
+
+# Make a histogram of the total number of steps taken each day
+
+
+```r
+library(ggplot2);
+ggplot(dt, aes(steps)) + geom_histogram()
 ```
 
 ```
-## [1] 10766.19
+## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
 ```
 
-The above number is the mean total number of steps per day.
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)
+
+# Calculate and report the mean and median of the total number of steps taken per day
+
+```r
+meanSteps <- mean(dt[,2]);
+medianSteps <- median(dt[,2]);
+```
+
+The mean number of steps per day is r as.integer(meanSteps)
+
+The median number of steps per day is r as.integer(medianSteps)
 
 ## What is the average daily activity pattern?
 
-The data set contains 61 days worth of activity data performed by the object. A simple line graph should be able to show the daily activity pattern. Note here that we did not remove the NA values in the data so there may be broken part in the graph. But that should be impact the data analysis.
+# The data set contains 61 days worth of activity data performed by the object. A simple line graph should be able to show the daily activity pattern. 
 
 
 ```r
@@ -36,9 +58,23 @@ plot(dt[,"date"], dt[,"steps"], col = 'green', xlab='Date', ylab='Steps', main='
 lines(dt[,"date"], dt[,"steps"], col = 'red');
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)
 
-From the graph, you can see that this person is 
+# Make a time series plot (type = "1") of the 5-minute interval  and the average number of steps taken across all days
+
+```r
+stepsByInterval <- setNames(aggregate(cd$steps, list(cd$interval), mean), c("interval", "steps"));
+library(ggplot2);
+ggplot(stepsByInterval, aes(x = interval, y = steps)) + geom_line();
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)
+
+# Find out which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps? 
+
+```r
+maxInterval <- stepsByInterval[stepsByInterval$steps == max(stepsByInterval$steps), ]$interval
+```
 
 ## Imputing missing values
 
@@ -160,8 +196,21 @@ head(complete_d);
 ```
 
 
+# Now that we have imputed all data, we can make a histogram of the total number of steps taken each day
+
+```r
+completeByInterval <- aggregate(x = complete_d$steps, by = list(complete_d$interval), mean)
+colnames(completeByInterval) <- list("interval", "steps")
+ggplot(completeByInterval, aes(steps)) + geom_histogram()
+```
+
+```
+## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)
 ## Are there differences in activity patterns between weekdays and weekends?
-First, we remove all NA data. Then, we want to group all data by "day of week". After that we can calculate the total number of steps by "day of week". 1 and 7 are weekend days. We can draw a bar plot and see if there is obervable difference between activity patterns of weekdays vs. weekends.  
+# First, we remove all NA data. Then, we want to group all data by "day of week". After that we can calculate the total number of steps by "day of week". 1 and 7 are weekend days. We can draw a bar plot and see if there is obervable difference between activity patterns of weekdays vs. weekends.  
 
 
 ```r
@@ -193,6 +242,18 @@ barplot(wdt$avSteps, main="Day of Week Activity", xlab="Day of Week", ylab = "Av
 ## not a graphical parameter
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)
 
 It appears that the object is more active during weekend (Friday, Saturday and Sunday) compared with weekdays. There is also a (smaller) peak activity on Wednesday. There may be a routin activity on Wednesday for the object which makes the object more active on Wednesday compared with other weekdays.   
+# Another way to look at this: Make a panel plot containing a time series plot (type="l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```r
+cd$weekdays <- weekdays(as.Date(cd$date));
+w <- ifelse(cd$weekdays == 'Saturday' | cd$weekdays == 'Sunday', "weekend", "weekday");
+cd$week <- as.factor(w);
+meanStepsTaken <- aggregate(cd$steps, by = list(cd$interval, cd$week), mean);
+colnames(meanStepsTaken) <- list("interval", "week", "steps");
+ggplot(meanStepsTaken, aes(x = interval, y = steps)) + geom_line() + facet_grid(. ~ week);
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-11-1.png)
